@@ -12,6 +12,18 @@ def readFile():
     arq.close()                          # Fecha o arquivo
     return lines
 
+def getA(tableau,restrictions):
+	return tableau[1:,restrictions:-1]
+
+def getB(tableau,restrictions):
+	return tableau[0,restrictions:-1]
+
+def getC(tableau,restrictions):
+	return tableau[1:,-1]
+
+def getResult(tableau,restrictions):
+	return tableau[0,-1]
+
 def putInFPI(A,b,c,operations,negativity,restrictions):      
     
     # Verifica igualdades      
@@ -102,7 +114,7 @@ def assemblesTableau(A,b,c):
 	
 	return tableau
 
-def main():    
+def main(verbose):    
 	np.set_printoptions(linewidth = 200)
 	
 	matrix = []
@@ -118,8 +130,6 @@ def main():
 	negativity = list(map(int,lines[2].replace('\n','').split(' ')))
 	c = list(map(float,lines[3].replace('\n','').split(' ')))
 
-	# print(lines[3].replace('\n','').split(' '))
-
 	for line in lines[4:]:
 		matrix.append(list(line.replace('\n','').split(' ')))
 		lineMatrix = []
@@ -128,17 +138,31 @@ def main():
 		A.append(lineMatrix)
 		operations.append(matrix[-1][-2])
 		b.append(float(matrix[-1][-1]))
+
+
+	if(verbose):
+		print('A lido do arquivo:\n',A,'\n')
+		print('b lido do arquivo:\n',b,'\n')
+		print('c lido do arquivo:\n',c,'\n')
 		
 
 	A = np.matrix(A)
 	A,b,c = putInFPI(A,b,c,operations,negativity,restrictions)
 
-	#print(A,b,c)
+	if(verbose):
+		print('\n\nA em FPI:\n',A,'\n')
+		print('b em FPI:\n',b,'\n')
+		print('c em FPI:\n',c,'\n')
+
 
 	tableau = assemblesTableau(A,b,c)
 
-	print(np.array_str(tableau,precision = 1, suppress_small = True),"\n")
-  	  	
+	if(verbose):
+		print('\n\nTableau montado:\n',np.array_str(tableau,precision = 1, suppress_small = True),"\n")
   	
+	print(getA(tableau,restrictions))
+	print(getB(tableau,restrictions))
+	print(getC(tableau,restrictions))
+	print(getResult(tableau,restrictions))
 	
-main()	
+main(True)	
