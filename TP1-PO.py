@@ -16,11 +16,10 @@ def putInFPI(A,b,c,operations,negativity,restrictions):
     
     # Verifica igualdades      
     for i in range(0,len(operations)):          # Percorre todas as linhas dos simbolos de igualdade/desigualdade
-
-        newColumn = np.empty((restrictions,1))
-        c.append(0)
-        if(operations[i] == '<='):          # Se for <=
-
+    	if(operations[i] != '=='):
+        	newColumn = np.empty((restrictions,1))
+        	c.append(0)
+    	elif(operations[i] == '<='):          # Se for <=
         	for j in range(0,restrictions): # Percorre todas as restricoes
         		# Adiciona variável de folga positiva se for a linha do <=
         		if(j == i):
@@ -30,7 +29,7 @@ def putInFPI(A,b,c,operations,negativity,restrictions):
         			newColumn[j] = 0
         	A = np.concatenate((A,newColumn),axis = 1)
 
-        if(operations[i] == '>='):			# Se for >=
+    	elif(operations[i] == '>='):			# Se for >=
         	for j in range(0,restrictions): # Percorre todas as restricoes
         		# Adiciona variável de folga negativa se for a linha do >=
            		if(j == i):
@@ -132,6 +131,7 @@ def main():
 	A = np.matrix(A)
 	A,b,c = putInFPI(A,b,c,operations,negativity,restrictions)
 
+	print(A,b,c)
 	tableau = assemblesTableau(A,b,c)
 
 	print(tableau)
