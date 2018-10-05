@@ -118,6 +118,8 @@ def main():
 	negativity = list(map(int,lines[2].replace('\n','').split(' ')))
 	c = list(map(float,lines[3].replace('\n','').split(' ')))
 
+	# print(lines[3].replace('\n','').split(' '))
+
 	for line in lines[4:]:
 		matrix.append(list(line.replace('\n','').split(' ')))
 		lineMatrix = []
@@ -131,11 +133,11 @@ def main():
 	A = np.matrix(A)
 	A,b,c = putInFPI(A,b,c,operations,negativity,restrictions)
 
-	print(A,b,c)
+	#print(A,b,c)
 
 	tableau = assemblesTableau(A,b,c)
 
-	print(tableau)
+	print(np.array_str(tableau,precision = 1, suppress_small = True),"\n")
   	  	
   	
 	
