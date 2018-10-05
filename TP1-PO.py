@@ -19,7 +19,7 @@ def putInFPI(A,b,c,operations,negativity,restrictions):
     	if(operations[i] != '=='):
         	newColumn = np.empty((restrictions,1))
         	c.append(0)
-    	elif(operations[i] == '<='):          # Se for <=
+    	if(operations[i] == '<='):          # Se for <=
         	for j in range(0,restrictions): # Percorre todas as restricoes
         		# Adiciona variável de folga positiva se for a linha do <=
         		if(j == i):
@@ -29,7 +29,7 @@ def putInFPI(A,b,c,operations,negativity,restrictions):
         			newColumn[j] = 0
         	A = np.concatenate((A,newColumn),axis = 1)
 
-    	elif(operations[i] == '>='):			# Se for >=
+    	if(operations[i] == '>='):			# Se for >=
         	for j in range(0,restrictions): # Percorre todas as restricoes
         		# Adiciona variável de folga negativa se for a linha do >=
            		if(j == i):
@@ -116,22 +116,23 @@ def main():
 	variables = int(lines[0])
 	restrictions = int(lines[1])
 	negativity = list(map(int,lines[2].replace('\n','').split(' ')))
-	c = list(map(int,lines[3].replace('\n','').split(' ')))
+	c = list(map(float,lines[3].replace('\n','').split(' ')))
 
 	for line in lines[4:]:
 		matrix.append(list(line.replace('\n','').split(' ')))
 		lineMatrix = []
 		for i in range(0,variables):
-			lineMatrix.append(int(matrix[-1][i]))
+			lineMatrix.append(float(matrix[-1][i]))
 		A.append(lineMatrix)
 		operations.append(matrix[-1][-2])
-		b.append(int(matrix[-1][-1]))
+		b.append(float(matrix[-1][-1]))
 		
 
 	A = np.matrix(A)
 	A,b,c = putInFPI(A,b,c,operations,negativity,restrictions)
 
 	print(A,b,c)
+
 	tableau = assemblesTableau(A,b,c)
 
 	print(tableau)
