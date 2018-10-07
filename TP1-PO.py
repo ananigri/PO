@@ -6,10 +6,10 @@ from collections import Counter
 # Funcao que le o arquivo de entrada
 
 def readFile():
-    name = sys.argv[1]                   # Le arquivo de entrada da linha de comando
-    arq  = open(name, "r")               # Abre arquivo em modo de leitura
-    lines = arq.readlines()             # Le todas as linhas do arquivo
-    arq.close()                          # Fecha o arquivo
+    name = sys.argv[1]          # Le arquivo de entrada da linha de comando
+    file  = open(name, "r")     # Abre arquivo em modo de leitura
+    lines = file.readlines()	# Le todas as linhas do arquivo
+    file.close()                # Fecha o arquivo
     return lines
 
 def getA(tableau,restrictions):
@@ -23,6 +23,9 @@ def getC(tableau,restrictions):
 
 def getZ(tableau,restrictions):
 	return tableau[0,-1]
+
+def getCertificate(tableau,restrictions):
+	return tableau[0,0:restrictions]
 
 def putInFPI(A,b,c,operations,negativity,restrictions):      
     
@@ -127,11 +130,10 @@ def assemblesTableau(tableau,restrictions,c):
 		for i in range(0,np.size(tableau,0)):
 			# Procura qual linha tem o valor 1
 			if(tableau[i,j] == 1):
-				print('c do tableau\n\n\n',tableau[0],'\n\n')
 				# Faz o c do tableau - a linha vezes o valor do c
 				tableau[0] = tableau[0] - (tableau[i]*tableau[0,j])
 	
-	lastColumn = tableau[:,-1]
+	# Remove colunas do tableau correspondentes a variaveis extras da auxiliar
 
 	tableau = np.concatenate((tableau[:,0:np.size(tableau,1)-(restrictions+1)],tableau[:,-1]),axis = 1)
 
@@ -227,7 +229,7 @@ def choosePivot(mat,restrictions):
 	# 		col = j+np.size(A,0)	# Soma a quantidade de linhas de A pois o indice final deve considerar o tableau completo
 	# 		break
 
-	# for i in range(0,np.size(b,0)):							# Percorre vetor b
+	# for i in range(0,np.size(b,0)):						# Percorre vetor b
 	# 	if A[i,col-np.size(A,0)] > 0:						# Procura um A[i,j] positivo			
 	# 		if (b[i,0] / A[i,col-np.size(A,0)]) < menor: 	# Verifica se a divisao do b correspondente a linha e coluna atual eh o menor
 	# 			menor = b[i,0] / A[i,col-np.size(A,0)]		# Se for o menor torna ele o novo menor
@@ -251,6 +253,63 @@ def choosePivot(mat,restrictions):
 	elif (not bCond) or (not cCond): # or (not achaSolucao(mat)):
 		return True,lin,col
 
+def findSolution(tableau,restrictions,variables):
+	jBase = []
+
+	A = getA(tableau,restrictions)
+	c = getC(tableau,restrictions)
+	b = getB(tableau,restrictions)
+
+	# Percorre o A e c
+	for j in range(0,np.size(A,1)):
+		# Se encontrar um c 0
+		if(c[:,j] == 0):
+			# Verifica se abaixo do c 0 tem 1 um e a quantidade de restricoes-1 em 0's
+			if(list(A[:,j]).count(1) == 1 and list(A[:,j]).count(0) == restrictions-1):
+				jBase.append(j) 		# Achou coluna básica, salva o indice dela
+
+	# Gera uma matriz para salvar a base viavel
+	base = np.matrix(np.ones((restrictions,restrictions)))	
+
+	# Percorre os indices da base viavel na matriz A e salva as colunas na matriz base
+	jB = 0
+	for j in jBase:
+		base[:,jB] = A[:,j]
+		jB = jB + 1
+
+	# Calcula solucao
+
+	sol = np.matmul(base,b)
+
+	x = []
+
+	jB = 0
+	for j in range(0,np.size(c,1)):
+		if(c[:,j] == 0 and list(A[:,j]).count(1) == 1 and list(A[:,j]).count(0) == restrictions-1):
+			x.append(float(sol[jB,:]))
+			jB = jB + 1
+		else:
+			x.append(0)
+
+	return x[0:variables]
+
+def verifyStatus(tableau):
+	return 'otimo'
+
+def saveFile(status,z,x,certificate):
+	name = sys.argv[2]                  # Le arquivo de saida da linha de comando
+	file  = open(name, "w")				# Abre arquivo em modo de escrita
+
+	if(status == 'otimo'):
+		file.write('Status: otimo\n')
+		file.write('Objetivo: ' + str(z) + '\n')
+		file.write('Solucao:\n')
+		for xi in x:
+			file.write(str(xi) + ' ')
+		file.write('\nCertificado:\n')		
+		for j in range(0,np.size(certificate,1)):
+			file.write(str(certificate[0,j]) + ' ')
+	file.close()                          # Fecha o arquivo
 
 def main(verbose):    
 	np.set_printoptions(linewidth = 200)
@@ -260,12 +319,14 @@ def main(verbose):
 	i = 0
 	j = 0
 	zero = 0.00001
+	z = 0
 
 	matrix = []
 	lineMatrix = []
 	A = []
 	b = []
 	c = []
+	x = []
 	operations = []
 	
 	lines = readFile()
@@ -315,11 +376,9 @@ def main(verbose):
 			if(verbose):
 				print('\n\nPivoteamento :',cont,' :\n',np.array_str(tableau,precision = 2, suppress_small = True),"\n")
 
-	print('Z',getZ(tableau,restrictions))
 
 	if(getZ(tableau,restrictions) <= zero):
 		tableau = assemblesTableau(tableau,restrictions,c)
-		print('olar\n\n\n')
 		if(verbose):
 			print('\nMatriz auxiliar Alterada :\n',np.array_str(tableau,precision = 2, suppress_small = True),"\n")
 		retorno = True
@@ -328,17 +387,22 @@ def main(verbose):
 		cont = 0
 		while retorno and i != -1 and j != -1:
 			retorno,i,j = choosePivot(tableau,restrictions)	
-			print('I: ',i,'J:',j,'\n\n')
 			if i != -1 and j != -1: 
 				tableau = pivote(i,j,tableau)
 				cont = cont + 1
 				if(verbose):
 					print('\n\nPivoteamento :',cont,' :\n',np.array_str(tableau,precision = 2, suppress_small = True),"\n")
 
+	status = verifyStatus(tableau)
 
+	if(status == 'otimo'):
+		x = findSolution(tableau,restrictions,variables)
+		z = getZ(tableau,restrictions)
+		certificate = getCertificate(tableau,restrictions)
 
+	print(certificate)
 
-
+	saveFile(status,z,x,certificate)
 	
 	
 main(True)	
